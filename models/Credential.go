@@ -1,6 +1,6 @@
 package models
 
 type Credential struct {
-	Username string
+	Email    string
 	Password string
 }

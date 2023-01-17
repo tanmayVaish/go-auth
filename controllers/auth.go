@@ -4,6 +4,8 @@ import (
 	"go-auth/models"
 	"time"
 
+	"go-auth/utils"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
@@ -11,29 +13,35 @@ import (
 var jwtKey = []byte("my_secret_key")
 
 func Login(c *gin.Context) {
-	var credential models.Credential
 
-	if err := c.ShouldBindJSON(&credential); err != nil {
+	var user models.User
+
+	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	var expectedPassword models.Credential
+	var existingUser models.User
 
-	models.DB.Where("username = ?", credential.Username).First(&expectedPassword)
+	models.DB.Where("email = ?", user.Email).First(&existingUser)
 
-	if expectedPassword.Password != credential.Password {
-		c.JSON(401, gin.H{"error": "invalid credentials"})
+	if existingUser.ID == 0 {
+		c.JSON(400, gin.H{"error": "user does not exist"})
+		return
+	}
+
+	errHash := utils.CompareHashPassword(user.Password, existingUser.Password)
+
+	if !errHash {
+		c.JSON(400, gin.H{"error": "invalid password"})
 		return
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 
-	claims := &models.Claims{
-		Username: credential.Username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
+	claims := jwt.StandardClaims{
+		Subject:   existingUser.Email,
+		ExpiresAt: expirationTime.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -46,8 +54,35 @@ func Login(c *gin.Context) {
 	}
 
 	c.SetCookie("token", tokenString, int(expirationTime.Unix()), "/", "localhost", false, true)
+	c.JSON(200, gin.H{"success": "user logged in"})
 }
 
 func Signup(c *gin.Context) {
+	var user models.User
 
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	var existingUser models.User
+
+	models.DB.Where("email = ?", user.Email).First(&existingUser)
+
+	if existingUser.ID != 0 {
+		c.JSON(400, gin.H{"error": "user already exists"})
+		return
+	}
+
+	var errHash error
+	user.Password, errHash = utils.GenerateHashPassword(user.Password)
+
+	if errHash != nil {
+		c.JSON(500, gin.H{"error": "could not generate password hash"})
+		return
+	}
+
+	models.DB.Create(&user)
+
+	c.JSON(200, gin.H{"success": "user created"})
 }
