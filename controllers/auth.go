@@ -10,11 +10,6 @@ import (
 
 var jwtKey = []byte("my_secret_key")
 
-var users = map[string]string{
-	"user1": "password1",
-	"user2": "password2",
-}
-
 func Login(c *gin.Context) {
 	var credential models.Credential
 
@@ -23,10 +18,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	expectedPassword, ok := users[credential.Username]
+	var expectedPassword models.Credential
 
-	if !ok || expectedPassword != credential.Password {
-		c.JSON(401, gin.H{"error": "invalid credential"})
+	models.DB.Where("username = ?", credential.Username).First(&expectedPassword)
+
+	if expectedPassword.Password != credential.Password {
+		c.JSON(401, gin.H{"error": "invalid credentials"})
 		return
 	}
 
