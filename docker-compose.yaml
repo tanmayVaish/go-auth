@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres-gorm:
+    image: postgres:13
+    ports:
+      - '5435:5432'
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_DB=test
+    networks:
+      - postgres-gorm-network
+networks:
+  postgres-gorm-network:
+    driver: bridge
