@@ -138,44 +138,6 @@ func Premium(c *gin.Context) {
 	c.JSON(200, gin.H{"success": "home page", "role": claims.Role})
 }
 
-func Refresh(c *gin.Context) {
-
-	cookie, err := c.Cookie("token")
-
-	if err != nil {
-		c.JSON(401, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	claims, err := utils.ParseToken(cookie)
-
-	if err != nil {
-		c.JSON(401, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	if claims.Role != "user" && claims.Role != "admin" {
-		c.JSON(401, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	expirationTime := time.Now().Add(5 * time.Minute)
-
-	claims.ExpiresAt = expirationTime.Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString(jwtKey)
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": "could not generate token"})
-		return
-	}
-
-	c.SetCookie("token", tokenString, int(expirationTime.Unix()), "/", "localhost", false, true)
-	c.JSON(200, gin.H{"success": "token refreshed"})
-}
-
 func Logout(c *gin.Context) {
 	c.SetCookie("token", "", -1, "/", "localhost", false, true)
 	c.JSON(200, gin.H{"success": "user logged out"})
