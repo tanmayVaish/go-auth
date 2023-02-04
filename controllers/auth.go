@@ -135,7 +135,7 @@ func Premium(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"success": "home page", "role": claims.Role})
+	c.JSON(200, gin.H{"success": "premium page", "role": claims.Role})
 }
 
 func Logout(c *gin.Context) {
