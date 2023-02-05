@@ -33,6 +33,12 @@ Running the Project
 go run main.go
 ```
 
+## Walkthrough
+
+If you want a complete walkthrough of this project. Do check out this blog I have written:
+
+[How to Implement Authentication and Authorization in Golang](https://tanmay-vaish.hashnode.dev/how-to-implement-authentication-and-authorization-in-golang)
+
 ## Contributing
 We welcome contributions! If you find a bug or want to request a new feature, please open an issue. If you want to contribute to the code, please open a pull request.
 
