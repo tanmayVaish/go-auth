@@ -142,3 +142,38 @@ func Logout(c *gin.Context) {
 	c.SetCookie("token", "", -1, "/", "localhost", false, true)
 	c.JSON(200, gin.H{"success": "user logged out"})
 }
+
+// ADDITIONAL FUNCTIONALITIES
+
+func ResetPassword(c *gin.Context) {
+
+	var user models.User
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	var existingUser models.User
+
+	models.DB.Where("email = ?", user.Email).First(&existingUser)
+
+	if existingUser.ID == 0 {
+		c.JSON(400, gin.H{"error": "user does not exist"})
+		return
+	}
+
+	var errHash error
+	user.Password, errHash = utils.GenerateHashPassword(user.Password)
+
+	if errHash != nil {
+		c.JSON(500, gin.H{"error": "could not generate password hash"})
+		return
+	}
+
+	models.DB.Model(&existingUser).Update("password", user.Password)
+
+	c.JSON(200, gin.H{"success": "password updated"})
+}
+
+
